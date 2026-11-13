@@ -1,21 +1,54 @@
 # Open-Source Firewall Testing: OPNsense Lab
 
-Group project for the Network Security module at TU Dublin (CA1, Oct to Nov 2025), with Vsevolod Shestopalov and Vladyslav Shkurina.
+**Team of three (my part: OPNsense)** · Network Security, CA1 · BSc Applied Cybersecurity & Digital Forensics, TU Dublin · Oct to Nov 2025
 
-Each of us set up a different open-source firewall in a VMware lab and attacked it to see how well its rules held up. The three firewalls were OPNsense, nftables and pfSense. My part was OPNsense.
+We set out to see how well three open-source firewalls hold up when their rules are attacked. Each of us built one firewall in a VMware lab and attacked it, then we compared results and demoed the work live.
 
-I built a small network with three zones: a Kali attacker on the WAN (RED) side, the OPNsense firewall in the middle, and a Windows 10 victim on the LAN (GREEN) side. WAN to LAN was denied by default; LAN to WAN was allowed. Then I ran three tests against my own rules:
+## Team and my contribution
 
-- SSH left open to the WAN on purpose, to play a misconfigured rule. I brute-forced the login with hydra; OPNsense rate-limited the attempts, and I showed a weak password still means full firewall access. Fix: restrict SSH to the LAN address range, so any outside host is refused (least privilege).
-- Full Nmap port scan from the attacker, with per-rule logging turned on. The live log showed every WAN probe being dropped in real time.
-- Port forwarding to a small web server on the victim, then a Nikto scan of it, to show why the service behind a forwarded port still has to be configured carefully.
+| Firewall | Owner |
+|---|---|
+| **OPNsense** | **Mykyta Doroshenko (me)** |
+| nftables | Vsevolod Shestopalov |
+| pfSense | Vladyslav Shkurina |
 
-For each test I wrote up why I ran it, what the firewall did, and how to remediate it, then compared OPNsense against my teammates' nftables and pfSense setups. We presented and demonstrated the work live in the lab.
+My work, all on the OPNsense side:
 
-Tools: OPNsense, Kali Linux, VMware, hydra, Nmap, Nikto. Topics: stateful firewall rules, network zoning (WAN/LAN), least-privilege access, logging and monitoring.
+- built the lab network
+- wrote the firewall rules
+- ran the three attack tests
+- wrote up each test with a remediation
+- compared my results with my teammates' firewalls for the shared write-up and live demo
 
-## Lab topology
-![Topology](images/01-topology.png)
+## Lab setup
 
-## WAN firewall rules
-![WAN rules](images/02-wan-firewall-rules.png)
+I built a small network with three parts:
+
+- a Kali Linux attacker on the WAN (RED) side
+- the OPNsense firewall in the middle
+- a Windows 10 victim on the LAN (GREEN) side
+
+By default, WAN to LAN traffic was denied and LAN to WAN traffic was allowed.
+
+![Lab topology](images/01-topology.png)
+
+![WAN firewall rules](images/02-wan-firewall-rules.png)
+
+## Tests and results
+
+| # | Test | What happened | Remediation |
+|---|---|---|---|
+| 1 | SSH left open to the WAN on purpose (a misconfigured rule), then brute-forced with **hydra** | OPNsense rate-limited the attempts, but a weak password would still give full access to the firewall | Restrict SSH to the LAN address range so any outside host is refused (least privilege) |
+| 2 | Full **Nmap** port scan from the attacker, with logging turned on for each rule | The live log showed every WAN probe being dropped in real time | None needed: default-deny held, and the per-rule logs give visibility |
+| 3 | Port forward to a small web server on the victim, scanned with **Nikto** | Nikto scanned the web server straight through the forwarded port | Harden any service behind a forwarded port. The firewall only controls who can reach it |
+
+## What it shows
+
+- Stateful firewall rules and network zoning (WAN/LAN)
+- Least-privilege access
+- Logging and monitoring
+- Testing your own controls from an attacker's point of view
+
+## Tools
+
+OPNsense, Kali Linux, VMware, hydra, Nmap, Nikto
